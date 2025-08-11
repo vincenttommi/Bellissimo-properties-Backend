@@ -1,0 +1,10 @@
+What each entry here means
+"localhost" → Allows requests using http://localhost:... (common for local development).
+
+"127.0.0.1" → Allows requests via the IPv4 loopback address.
+
+"178.18.243.142" → Allows direct access to your app via that public IP.
+
+"tunaresq-be.tunaresq.co.ke" → Allows access via this domain name.
+
+"0.0.0.0" → This is unusual — it’s a non-routable meta-address meaning “all IPv4 addresses” locally. Normally, browsers don’t send Host: 0.0.0.0, but it might be here for certain container setups or internal testing.
