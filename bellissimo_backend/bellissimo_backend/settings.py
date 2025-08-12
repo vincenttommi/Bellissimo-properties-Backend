@@ -72,6 +72,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django-extensions',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corheaders',
+    'drf_spectacular',
+    'django_filters'
+
+    
+
 ]
 
 MIDDLEWARE = [
@@ -94,8 +103,123 @@ CORS_ALLOW_ORIGINS = [
     "http://localhost:3000",   
 ]
 
+CORS_ALLOW_HEADERS  = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+CORS_ALLOW_HEADERS = ['set_cookie']  # optional for debugging
+
+
+if DEBUG:
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE  = False
+
+
+    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SECURE  = True
+    SESSION_COOKIE_DOMAIN  = None
+
+
+
+    SESSION_COOKIE_SAMESITE = 'None'
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_DOMAIN = None
+
+
+
+REST_FRAMEWORK = {
+    
+
+    "DEFAULT_SCHEMA_CLASS":"drf_spectacular.openapi.AutoSchema",
+
+
+
+}
+    
+
+
+
+
+
+
+
+AUTH_USER_MODEL  = 'user.User'
+
 
 ROOT_URLCONF = 'bellissimo_backend.urls'
+
+
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Bellissimo Properties',
+    'DESCRIPTION': '''
+    *Bellissimo Properties API Documentation*
+    
+    Welcome to the Bellissimo Properties  - a platform that  enables landlord, tenant ad house buyers to interact seamlessly.
+   
+    ''',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'CONTACT': {
+        'name': 'Bellissimo Properties Support',
+        'email': 'vincenttommikorir@gmail.com',
+        'url': '',
+    },
+    'LICENSE': {
+        'name': 'Proprietary',
+        'url': '',
+    },
+    'EXTERNAL_DOCS': {
+        'description': 'Bellissimo Properties Documentation',
+        'url': '',
+    },
+    
+    # NEW: JWT Authentication Configuration for Swagger
+    'AUTHENTICATION_WHITELIST': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': 'JWT authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"'
+        }
+    },
+    'SECURITY': [{'Bearer': []}],
+    
+    # NEW: Additional Swagger UI settings for better JWT experience
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,  # Keep authorization after page refresh
+        'displayOperationId': False,
+        'defaultModelsExpandDepth': 1,
+        'defaultModelExpandDepth': 1,
+        'defaultModelRendering': 'example',
+        'displayRequestDuration': True,
+        'docExpansion': 'none',
+        'filter': True,
+        'operationsSorter': 'alpha',
+        'showExtensions': True,
+        'showCommonExtensions': True,
+        'tagsSorter': 'alpha',
+        'tryItOutEnabled': True,
+        'validatorUrl': None,
+    },
+    
+    # NEW: Server configuration
+    'SERVERS': [
+        {'url': 'http://127.0.0.1:8000', 'description': 'Development server'},
+        {'url': '', 'description': 'Production server'},
+    ],
+}
 
 
 
@@ -192,3 +316,26 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 APPEND_SLASH = False
+
+
+
+
+LOGGING =  {
+    "version":1,
+    "disable_existing_loggers":False,
+    "handlers":{
+        "file":{
+            "level": "DEBUG",
+            "class":"logging.FileHandler",
+            "filename":"debug.log",
+
+        },
+    },
+    "loggers":{
+        "django":{
+            "handlers":["file"],
+            "level":"DEDUG",
+            "propagat":True,
+        },
+    },
+}

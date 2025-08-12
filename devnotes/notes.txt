@@ -5,6 +5,64 @@ What each entry here means
 
 "178.18.243.142" → Allows direct access to your app via that public IP.
 
-"tunaresq-be.tunaresq.co.ke" → Allows access via this domain name.
+"bellissimo-be.properties.co.ke" → Allows access via this domain name.
 
 "0.0.0.0" → This is unusual — it’s a non-routable meta-address meaning “all IPv4 addresses” locally. Normally, browsers don’t send Host: 0.0.0.0, but it might be here for certain container setups or internal testing.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+] This controls which HTPP request headers my backend will  accept  from browsers in cross-origin requests
+
+
+
+
+development security overrides
+if DEBUG:
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+DEBUG: in python-django , this is true in development , False in production
+SESSION_COOKIE_SECURE = False cookies can be sent  over HTTP(insecure in dev mode)
+
+CSRF_COOKIE_SECURE = False Same for CSRF cookies
+
+
+
+
+3️⃣ Cookie settings (apply in all modes unless overridden above)
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_DOMAIN = None
+
+
+
+SESSION_COOKIE_SAMESITE = 'None'  allows your cookies to be sent in cross-site requests(mostly effective if your frontend and backend are on differrent domains)
+SESSION_COOKIE_SECURE = True  cookies will only be sent over HTTPS(secure)
+SESSION_COOKIE_DOMAIN = None cookies is valid for only current domain
+
+
+
+
+CORS_EXPOSE_HEADERS = ['set-cookie']  # Optional: for debugging
+Normally  ,browsers hide  certain response  headers from javascript security
+CORS_EXPOSE_HEADERS - helps to make specific  headers visible  to javascript here it's allowing 'set-cookie'  so you can  inspect cookies from frontend
