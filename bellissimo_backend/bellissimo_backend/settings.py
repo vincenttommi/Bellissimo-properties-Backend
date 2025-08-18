@@ -1,22 +1,22 @@
-import os 
-from pathlib import Path
+import os
 from logging import config
-from decouple import confiig
+from pathlib import Path
+from decouple import config
+from datetime import timedelta
 
-from  datetime import timedelta
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SECRET_KEY = config("DJANGO_SECRET_KEY")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config(
-"SECRET_KEY", default='django-insecure-q-nwq%@wqx&@2l8_9xb+!g09j-19&-)%n7wnb^d91g(@@4po^$'
-)
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG =  bool(os.environ.get("DEBUG", default=0))
+
 
 DEBUG = config("DEBUG", default=False, cast=bool)
 
@@ -261,11 +261,11 @@ WSGI_APPLICATION = 'bellissimo_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycop2',
-        'NAME': config("DB_NAME", default="tunaresq_db"),
-        "USER": config("DB_USER",default="tunaresq_user"),
-        "PASSWORD":config("DB_PASSWORD",default=""),
-        "HOST":config("DB_HOST",default="localhost"),
-        "PORT":config("DB_PORT", default="5432"),
+        'NAME': config("DATABASE_NAME", default="bellissimo_backend"),
+        "USER": config("DATABASE_USER",default="vincent_tommi"),
+        "PASSWORD":config("DATABASE_PASSWORD",default=""),
+        "HOST":config("DATABASE_HOST",default="localhost"),
+        "PORT":config("DATABASE_PORT", default="5432"),
     },
 }
 
