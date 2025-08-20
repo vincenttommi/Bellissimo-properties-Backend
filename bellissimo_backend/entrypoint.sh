@@ -1,13 +1,25 @@
 #!/bin/sh
 set -e
 
-# Run database migrations automatically (optional but common)
+echo "🏗️  Starting entrypoint..."
+
+# Wait for the database to be ready
+if [ "$DATABASE_HOST" != "" ]; then
+  echo "⏳ Waiting for Postgres at $DATABASE_HOST:$DATABASE_PORT..."
+  until pg_isready -h "$DATABASE_HOST" -p "$DATABASE_PORT" -U "$DATABASE_USERNAME" > /dev/null 2>&1; do
+    sleep 1
+  done
+  echo "✅ Postgres is ready!"
+fi
+
+# Run migrations
+echo "📦 Running migrations..."
 python manage.py migrate --noinput
 
-if [ "$DJANGO_ENV" = "development" ]; then
-    echo "Starting Django development server..."
-    python manage.py runserver 0.0.0.0:8000
-else
-    echo "Starting Gunicorn server..."
-    gunicorn --bind 0.0.0.0:8000 --workers 3 bellissimo_backend.wsgi:application
-fi
+# Collect static files (optional, but common in prod)
+echo "🎨 Collecting static files..."
+python manage.py collectstatic --noinput
+
+# Finally start Django server (adjust if you use gunicorn/uvicorn)
+echo "🚀 Starting Django..."
+exec python manage.py runserver 0.0.0.0:8000
