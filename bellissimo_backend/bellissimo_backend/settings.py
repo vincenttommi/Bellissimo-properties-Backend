@@ -32,14 +32,14 @@ ALLOWED_HOSTS = [
 ]
 
 
-EMAIL_BACKEND = config('EMAIL_BACKEND', default="django.core.mail.backends.smtp.EmailBackend")
-EMAIL_BACKEND = config('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT = config('EMAIL_PORT',cast=int, default=True)
-EMAIL_HOST_TLS = config('EMAIL_USE_TLS', cast=bool, default=True)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER',defaul='vincenttommikorir@gmail.com' )
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+# EMAIL_BACKEND = config('EMAIL_BACKEND', default="django.core.mail.backends.smtp.EmailBackend")
+# EMAIL_BACKEND = config('EMAIL_HOST', default='smtp.gmail.com')
+# EMAIL_PORT = config('EMAIL_PORT',cast=int, default=True)
+# EMAIL_HOST_TLS = config('EMAIL_USE_TLS', cast=bool, default=True)
+# EMAIL_HOST_USER = config('EMAIL_HOST_USER',defaul='vincenttommikorir@gmail.com' )
+# EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL',default=EMAIL_HOST_USER)
+# DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL',default=EMAIL_HOST_USER)
 # Application definition
 
 
@@ -260,14 +260,15 @@ WSGI_APPLICATION = 'bellissimo_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycop2',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': config("DATABASE_NAME", default="bellissimo_backend"),
-        "USER": config("DATABASE_USER",default="vincent_tommi"),
-        "PASSWORD":config("DATABASE_PASSWORD",default=""),
-        "HOST":config("DATABASE_HOST",default="localhost"),
-        "PORT":config("DATABASE_PORT", default="5432"),
+        "USER": config("DATABASE_USERNAME", default="vincent_tommi"),
+        "PASSWORD": config("DATABASE_PASSWORD", default=""),
+        "HOST": config("DATABASE_HOST", default="localhost"),
+        "PORT": config("DATABASE_PORT", default="5432"),
     },
 }
+
 
 
 # Password validation
