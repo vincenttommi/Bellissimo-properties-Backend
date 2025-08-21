@@ -1,32 +1,43 @@
-SHELL := /bin/bash
+# Makefile for Bellissimo Properties Backend
 
-help:
-	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | \
-	awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | \
-	sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
+PROJECT_NAME=bellissimo_backend
+COMPOSE=docker compose -p $(PROJECT_NAME)
 
-install:
-	python3 -m venv venv
-	venv/bin/pip install -r requirements.txt
+# --- Development ---
+dev:
+	$(COMPOSE) up --build
 
-run:
-	venv/bin/python manage.py runserver
+dev-down:
+	$(COMPOSE) down -v
 
-migration:
-	venv/bin/python manage.py makemigrations
+dev-logs:
+	$(COMPOSE) logs -f
 
+dev-shell:
+	$(COMPOSE) exec django-web bash
+
+# --- Production ---
+prod:
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+
+prod-down:
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.prod.yml down -v
+
+prod-logs:
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.prod.yml logs -f
+
+prod-shell:
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.prod.yml exec django-web bash
+
+# --- Utilities ---
 migrate:
-	venv/bin/python manage.py migrate
+	$(COMPOSE) exec django-web python manage.py migrate
 
-superuser:
-	venv/bin/python manage.py createsuperuser
+makemigrations:
+	$(COMPOSE) exec django-web python manage.py makemigrations
 
-heroku:
-	git push heroku master
+createsuperuser:
+	$(COMPOSE) exec django-web python manage.py createsuperuser
 
-deploy:
-	docker-compose build
-	docker-compose up -d
-
-down:
-	docker-compose down
+collectstatic:
+	$(COMPOSE) exec django-web python manage.py collectstatic --noinput

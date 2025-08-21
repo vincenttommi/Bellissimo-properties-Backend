@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
 echo "🏗️  Starting entrypoint..."
@@ -16,10 +16,13 @@ fi
 echo "📦 Running migrations..."
 python manage.py migrate --noinput
 
-# Collect static files (optional, but common in prod)
+# Collect static files (optional, but kept for consistency)
 echo "🎨 Collecting static files..."
 python manage.py collectstatic --noinput
 
-# Finally start Django server (adjust if you use gunicorn/uvicorn)
+# Print the local development URL
+echo "🌐 Django application is running at http://localhost:8000"
+
+# Finally start Django server
 echo "🚀 Starting Django..."
 exec python manage.py runserver 0.0.0.0:8000
