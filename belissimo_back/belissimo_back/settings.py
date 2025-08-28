@@ -1,6 +1,6 @@
 from pathlib import Path
 import os
-from decouple import timedelta
+from decouple import config
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -11,7 +11,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY =  config('django-insecure-dtm7f9iz-r6(n!x3wnj2)+&ibbos4)e@#8x0s6iq6g5ez1yw$z')
+SECRET_KEY =  config(
+    "SECRET_KEY",default="django-insecure-dtm7f9iz-r6(n!x3wnj2)+&ibbos4)e@#8x0s6iq6g5ez1yw$z")
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -40,7 +41,6 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_spectacular',
-    'waitlist',
     'django_extensions',
 ]
 
