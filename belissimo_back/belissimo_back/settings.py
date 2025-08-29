@@ -100,9 +100,9 @@ REST_FRAMEWORK = {
 
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'TunaresQ API',
+    'TITLE': 'Bellissimo API',
     'DESCRIPTION': '''
-    *TunaresQ Backend API Documentation*
+    *Bellissimo Backend API Documentation*
     
     Welcome to the Belissimo_backend API - a platform that connects Landlords,Tenants and those looking to buy/rent an apartment or an Airbnb, those looking to explore architectural construction projects
 
