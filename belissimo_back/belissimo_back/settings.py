@@ -42,6 +42,16 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'django_extensions',
+    'users',
+    'chat',
+    'bookings',
+    'emergency',
+    'maintenance_tickets',
+    'notifications',
+    'payments',
+    'properties',
+    'revenue',
+    ''
 ]
 
 MIDDLEWARE = [
