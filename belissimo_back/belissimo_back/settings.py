@@ -51,7 +51,8 @@ INSTALLED_APPS = [
     'payments',
     'properties',
     'revenue',
-    ''
+    'common'
+   
 ]
 
 MIDDLEWARE = [
