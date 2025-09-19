@@ -1,3 +1,45 @@
 from django.db import models
+from users.models import User
+from properties.models import Property
 
-# Create your models here.
+
+
+
+class AirbnbUnit(models.Model):
+    STATUS_CHOICES = [
+        ("available","Available"),
+        ("booked","Booked"),
+        ("inactive","Inactive"),
+    ]
+
+
+
+    property = models.ForeignKey(Property, on_delete=models.CASCADE)
+    landlord = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={"role":"landlord"})
+    title = models.ForeignKey(max_length=255)
+    description = models.TextField()
+    price_per_night = models.DecimalField(max_digits=20, choices=STATUS_CHOICES, default="available")
+    max_guest =  models.PositiveIntegerField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="available")
+
+
+
+
+class AirbnbBooking(model.Model):
+
+    STATUS_CHOICES = [
+        ("pending","Pending"),
+        ("confirmed","Confirmed"),
+        ("cancelled","Cancelled"),
+        ("completed","Completed"),
+    ]
+
+    Airb_unit = models.ForeignKey(AirbnbUnit, on_delete=models.CASCADE)
+    landlord =  models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={"role":"landlord"})
+    guest_name = models.CharField(max_length=255)
+    guest_phone = models.CharField(max_length=50)
+    check_in =  models.DateField()
+    check_out = models.DateField()
+    amount =models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    
