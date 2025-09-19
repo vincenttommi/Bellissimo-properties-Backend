@@ -49,8 +49,7 @@ INSTALLED_APPS = [
     'maintenance_tickets',
     'notifications',
     'payments',
-    'properties',
-    'revenue',   
+    'properties', 
 ]
 
 MIDDLEWARE = [
