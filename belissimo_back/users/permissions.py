@@ -1,17 +1,28 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
-class IsAuthenticatedOrReadOnly(BasePermission):
-    """
-  Allow GET(list and retrieve) ,HEAD and OPTIONS methods for all users,but restrict POST/PUT/DELETE to authenticated users.
-"""
-    def has_permission(self, request, view):
-        #Allow read-only  access for unauthenticated users
-        if request.method in SAFE_METHODS:
+
+from rest_framework import permissions
+
+class IsAdmin(permissions.BasePermission):
+    def has_permission(self,request,view):
+        return request.user.is_authenticated and request.user.role == 'admin'
+    
+class  IsLanlord(permissions.BasePermission):
+    def has_permission(self,request,view):
+        return request.user.is_authenticated and request.user.role == 'landlord'
+
+class  IsTenant(permissions.BasePermission):
+    def has_permission(self,request,view):
+        return request.user.is_authenticated and request.user.role == 'tenant'
+
+class IsAdminOrLandlord(permissions.BasePermission):
+    def has_permission(self,request,view):
+        return request.user.is_authenticated and request.user.role in ['admin','landlord']
+    
+class IsOwnerOrAdmin(permissions.BasePermission):
+    def  has_object_permission(self,request,view, obj):
+        if request.user.role == 'admin':
             return True
-        #Allow write access for authenticated users
-        return request.user and request.user.is_authenticated
-    
-
-    
-
-
-    
+        if hasattr(obj, 'landlord') and  obj.landlord == request.user:
+            return True
+        if hasattr(obj,'tenant') and obj.tenant == request.user:
+            return True
+        return False
