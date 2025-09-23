@@ -42,14 +42,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'django_extensions',
-    'users',
-    'chat',
-    'bookings',
-    'emergency',
-    'maintenance_tickets',
-    'notifications',
-    'payments',
-    'properties', 
+    'users', 
 ]
 
 MIDDLEWARE = [
@@ -238,15 +231,33 @@ LOGGING = {
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+
+
 DATABASES = {
-    'default': {
-        'ENGINE': "django.db.backends.postgresql_psycopg2",
-        "NAME": config("DB_NAME", default='bellissimo'),
-        "USER":config("DB_USER",default="vincent_tommi"),
-        "PASSWORD":config("DB_PASSWORD", default="tommi07"),
-        "HOST":config("DB_HOST", default="localhost"),
-        "PORT":config("DB_PORT", default="5432")
-    },
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": config("DATABASE_NAME", default="bellissimo"),
+        "USER": config("DATABASE_USERNAME", default="vincent"),
+        "PASSWORD": config("DATABASE_PASSWORD", default="tommi087"),
+        "HOST": config("DATABASE_HOST", default="localhost"),
+        "PORT": config("DATABASE_PORT", default="5432"),
+    }
+}
+
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSESS':[
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES':[
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PERMISSION_CLASSES':[
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS':'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE':10,
 }
 
 
@@ -293,3 +304,5 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'users.User'
