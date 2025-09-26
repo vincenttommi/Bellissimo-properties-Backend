@@ -2,49 +2,57 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-
-from .models import User
 from django.utils import timezone
 from django.db import IntegrityError
+from .models import User
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
-        write_only=True, 
+        write_only=True,
         validators=[validate_password],
-        style={'input_type': 'password'}
+        style={'input_type': 'password'},
+        required=False,  # Password is optional for admin-created users
+        allow_blank=True
     )
     password_confirm = serializers.CharField(
         write_only=True,
-        style={'input_type': 'password'}
+        style={'input_type': 'password'},
+        required=False,  # Password confirmation is optional
+        allow_blank=True
     )
 
     class Meta:
         model = User
         fields = [
             'firstname', 'lastname', 'country_code', 'mobile_number',
-            'email_address', 'password', 'password_confirm'
+            'email_address', 'password', 'password_confirm', 'role',
+            'identification_number'
         ]
 
     def validate(self, attrs):
         if not attrs.get('mobile_number'):
             attrs['mobile_number'] = None  # Convert empty string to None
-        if attrs['password'] != attrs['password_confirm']:
-            raise serializers.ValidationError("Passwords don't match.")
+        
+        # Validate password only if provided
+        if attrs.get('password') or attrs.get('password_confirm'):
+            if attrs.get('password') != attrs.get('password_confirm'):
+                raise serializers.ValidationError({"password_confirm": "Passwords don't match."})
+        
+        # Validate role
+        if attrs.get('role') not in ['landlord', 'tenant']:
+            raise serializers.ValidationError({"role": "Role must be either 'landlord' or 'tenant'."})
+        
         return attrs
-
-
 
     def create(self, validated_data):
         validated_data.pop('password_confirm', None)
         user = User.objects.create_user(**validated_data)
-        user.generate_verification_code()
         return user
-
 
 class SocialRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['firstname', 'lastname', 'email_address', 'provider', 'uid', 'photo_url']
+        fields = ['firstname', 'lastname', 'email_address', 'provider', 'uid', 'photo_url', 'role']
         extra_kwargs = {
             'email_address': {'validators': []}  # Disable default uniqueness validation
         }
@@ -54,6 +62,11 @@ class SocialRegistrationSerializer(serializers.ModelSerializer):
         if provider == 'email' and User.objects.filter(email_address=value).exists():
             raise serializers.ValidationError("A user with this email already exists.")
         return value
+
+    def validate(self, attrs):
+        if attrs.get('role') not in ['landlord', 'tenant']:
+            raise serializers.ValidationError({"role": "Role must be either 'landlord' or 'tenant'."})
+        return attrs
 
     def create(self, validated_data):
         provider = validated_data.get('provider')
@@ -77,11 +90,9 @@ class SocialRegistrationSerializer(serializers.ModelSerializer):
         except IntegrityError:
             raise serializers.ValidationError("Failed to create user due to a conflict.")
 
-
 class UserLoginSerializer(serializers.Serializer):
     email_address = serializers.EmailField()
     password = serializers.CharField(style={'input_type': 'password'})
-
 
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.ReadOnlyField()
@@ -92,28 +103,41 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'firstname', 'lastname', 'full_name', 'country_code',
             'mobile_number', 'email_address', 'is_verified', 'verified_at',
-            'created_at', 'updated_at'
+            'created_at', 'updated_at', 'role', 'identification_number'
         ]
         read_only_fields = ['id', 'verified_at', 'created_at', 'updated_at']
 
+class UserListSerializer(serializers.ModelSerializer):
+    full_name = serializers.ReadOnlyField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'firstname', 'lastname', 'full_name', 'email_address',
+            'mobile_number', 'role', 'identification_number', 'is_active'
+        ]
 
 class AccountVerificationSerializer(serializers.Serializer):
     email_address = serializers.EmailField()
     verification_code = serializers.CharField(max_length=10)
 
-
 class PasswordResetRequestSerializer(serializers.Serializer):
     email_address = serializers.EmailField()
 
-
-
 class PasswordResetConfirmSerializer(serializers.Serializer):
-    token = serializers.CharField(max_length=64)  # Increased for security
-    new_password = serializers.CharField(write_only=True, style={'input_type': 'password'})
-    password_confirm = serializers.CharField(write_only=True, style={'input_type': 'password'})
+    token = serializers.CharField(max_length=64)
+    new_password = serializers.CharField(
+        write_only=True,
+        style={'input_type': 'password'},
+        required=True
+    )
+    password_confirm = serializers.CharField(
+        write_only=True,
+        style={'input_type': 'password'},
+        required=True
+    )
 
     def validate_new_password(self, value):
-        """Validate password strength"""
         try:
             validate_password(value)
         except ValidationError as e:
@@ -121,7 +145,6 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         return value
 
     def validate(self, attrs):
-        """Validate passwords match"""
         if attrs['new_password'] != attrs['password_confirm']:
             raise serializers.ValidationError({"password_confirm": "Passwords don't match"})
         return attrs

@@ -1,4 +1,3 @@
-from urllib import response
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -9,25 +8,21 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from .custom import custom_response, custom_error_response
 from .models import User
 from .serializers import *
-
+from .permissions import IsAdminRole
 from .utils import send_verification_email, send_password_reset_email
-
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
-
 from django.http import JsonResponse
 from django.conf import settings
 from rest_framework.response import Response
 from django.db import IntegrityError
 import logging
-
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 from rest_framework.views import APIView
-
+from django.db import models
 
 logger = logging.getLogger(__name__)
-
 
 @extend_schema_view(
     list=extend_schema(tags=['User Management']),
@@ -42,11 +37,10 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     
     def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires.
-        """
         if self.action in ['register', 'login', 'forgot_password', 'reset_password', 'verify', 'resend_verification', 'social_register']:
             permission_classes = [AllowAny]
+        elif self.action in ['create_landlord_or_tenant', 'list_users', 'delete_user']:
+            permission_classes = [IsAdminRole]
         else:
             permission_classes = [IsAuthenticated]
         
@@ -65,11 +59,80 @@ class UserViewSet(viewsets.ModelViewSet):
             return PasswordResetRequestSerializer
         elif self.action == 'reset_password':
             return PasswordResetConfirmSerializer
+        elif self.action == 'list_users':
+            return UserListSerializer
         return UserSerializer
 
     @extend_schema(
-    tags=['Authentication'],
-    description="Register or login user with social OAuth provider (Google, Facebook, etc.)."
+        tags=['User Management'],
+        description="Create a new landlord or tenant and send a password reset email (Admin only)."
+    )
+    @action(detail=False, methods=['post'], url_path='create-landlord-tenant')
+    def create_landlord_or_tenant(self, request):
+        """
+        Create a new landlord or tenant and send a password reset email (Admin only)
+        """
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                validated_data = serializer.validated_data
+                validated_data.pop('password', None)
+                validated_data.pop('password_confirm', None)
+                user = User.objects.create_user(
+                    email_address=validated_data['email_address'],
+                    firstname=validated_data['firstname'],
+                    lastname=validated_data.get('lastname'),
+                    country_code=validated_data.get('country_code'),
+                    mobile_number=validated_data.get('mobile_number'),
+                    role=validated_data['role'],
+                    identification_number=validated_data.get('identification_number'),
+                    created_by=request.user
+                )
+                
+                # Generate password reset token (no verification code)
+                reset_token = user.generate_password_reset_token()
+                
+                # Send password reset email
+                try:
+                    email_sent = send_password_reset_email(
+                        to_email=user.email_address,
+                        name=user.full_name,
+                        reset_token=reset_token
+                    )
+                    if not email_sent:
+                        logger.warning(f"Failed to send password reset email to {user.email_address}")
+                        response_data = {
+                            'user': UserSerializer(user).data,
+                            'warning': 'Account created but password reset email could not be sent.'
+                        }
+                    else:
+                        response_data = {'user': UserSerializer(user).data}
+                except Exception as e:
+                    logger.error(f"Error sending password reset email to {user.email_address}: {str(e)}")
+                    response_data = {
+                        'user': UserSerializer(user).data,
+                        'warning': 'Account created but password reset email could not be sent.'
+                    }
+                
+                return custom_response(
+                    data=response_data,
+                    message=f"{user.role.capitalize()} created successfully",
+                    status_code=status.HTTP_201_CREATED
+                )
+            except IntegrityError as e:
+                logger.error(f"IntegrityError during landlord/tenant creation: {str(e)}")
+                return custom_error_response(
+                    message=f"Integrity error: {str(e)}",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+        return custom_error_response(
+            message=serializer.errors,
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    @extend_schema(
+        tags=['Authentication'],
+        description="Register or login user with social OAuth provider (Google, Facebook, etc.)."
     )
     @action(detail=False, methods=['post'], url_path='social-register')
     def social_register(self, request):
@@ -127,8 +190,8 @@ class UserViewSet(viewsets.ModelViewSet):
             )
 
     @extend_schema(
-    tags=['Authentication'],
-    description="Register a new user account and send verification email."
+        tags=['Authentication'],
+        description="Register a new user account and send verification email."
     ) 
     @action(detail=False, methods=['post'])
     def register(self, request):
@@ -140,7 +203,6 @@ class UserViewSet(viewsets.ModelViewSet):
             try:
                 user = serializer.save()
 
-                # Send verification email with error handling
                 try:
                     email_sent = send_verification_email(
                         to_email=user.email_address,
@@ -168,7 +230,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 )
 
             except IntegrityError as e:
-                # Log and return detailed integrity error
                 print(f"IntegrityError during registration: {str(e)}")
                 return custom_error_response(
                     message=f"Integrity error: {str(e)}",
@@ -186,7 +247,6 @@ class UserViewSet(viewsets.ModelViewSet):
             status_code=status.HTTP_400_BAD_REQUEST
         )
 
-
     @extend_schema(
         tags=['Authentication'],
         description="Login user and return JWT tokens."
@@ -196,7 +256,6 @@ class UserViewSet(viewsets.ModelViewSet):
         """Login user and return JWT tokens - validation handled at model level"""
         data = request.data
         
-        # Authenticate user with provided credentials
         user = authenticate(
             request=request,
             username=data.get('email_address'),
@@ -209,7 +268,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 status_code=status.HTTP_401_UNAUTHORIZED
             )
         
-        # Use model-level validation for login requirements
         try:
             user.validate_for_login()
         except ValidationError as e:
@@ -218,58 +276,49 @@ class UserViewSet(viewsets.ModelViewSet):
                 status_code=status.HTTP_403_FORBIDDEN
             )
         
-        # Update last login timestamp
         user.last_login = timezone.now()
         user.save(update_fields=['last_login'])
         
         refresh = RefreshToken.for_user(user)
-
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
 
-        # Prepare the data you want in the response body
         response_data = {
             'access_token': access_token,
-            # 'token_type': 'Bearer',
-            # 'expires_in': refresh.access_token.lifetime.total_seconds(),
             'user': UserSerializer(user).data,
         }
 
-        # Use JsonResponse so we can attach cookies
         response = JsonResponse({
             'data': response_data,
             'message': 'Login successful'
         })
 
-        # Set access token cookie (shorter-lived)
         response.set_cookie(
             key='access',
             value=access_token,
             httponly=True,
-            secure=False,            
+            secure=False,
             samesite='Lax',
-            max_age=3600  #set to 1 hour          
-
+            max_age=3600
         )
 
-        # Set refresh token cookie (longer-lived)
         response.set_cookie(
             key='refresh',
             value=refresh_token,
             httponly=True,
             secure=False,
             samesite='Lax',
-            max_age=7 * 24 * 3600  # 7 days
+            max_age=7 * 24 * 3600
         )
 
         return response
 
     @extend_schema(
-    tags=['Password Management'],
-    description="Request password reset email."
+        tags=['Password Management'],
+        description="Request password reset email."
     ) 
-    @method_decorator(ratelimit(key='ip', rate='1/30m', block=True))                  # max 1 request per IP in 30 minutes
-    @method_decorator(ratelimit(key='post:email_address', rate='1/30m', block=True))  # max 1 reset per email in 30 minutes
+    @method_decorator(ratelimit(key='ip', rate='1/30m', block=True))
+    @method_decorator(ratelimit(key='post:email_address', rate='1/30m', block=True))
     @action(detail=False, methods=['post'], url_path='forgot-password')
     def forgot_password(self, request):
         """Request password reset - always returns success for security"""
@@ -278,13 +327,12 @@ class UserViewSet(viewsets.ModelViewSet):
         
         try:
             user = User.objects.get(email_address=serializer.validated_data['email_address'])
-            if user.is_active:  # Only send if account is active
+            if user.is_active:
                 reset_token = user.generate_password_reset_token()
                 send_password_reset_email(user.email_address, user.full_name, reset_token)
         except (User.DoesNotExist, ValidationError):
-            pass  # Don't reveal if email exists or if rate limited
+            pass
         
-        # Always return success message for security
         return Response({
             'status': True,
             'message': 'If an account exists, reset instructions have been sent',
@@ -328,7 +376,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 'message': 'Invalid or expired reset token',
                 'data': None
             }, status=status.HTTP_400_BAD_REQUEST)
- 
+
     @extend_schema(
         tags=['Account Verification'],
         description="Verify user account with email address and verification code."
@@ -357,21 +405,18 @@ class UserViewSet(viewsets.ModelViewSet):
 
                     response = JsonResponse({
                         'data': response_data,
-                        # 'token_type': 'Bearer',
                         'message': 'Account verified successfully'
                     })
 
-                    # Set access token in HttpOnly cookie
                     response.set_cookie(
                         key='access',
                         value=access_token,
                         httponly=True,
                         secure=True,
-                        samesite='None',  # Use 'None' for cross-site requests
-                        max_age=3600          
+                        samesite='None',
+                        max_age=3600
                     )
 
-                    # Set refresh token in HttpOnly cookie
                     response.set_cookie(
                         key='refresh',
                         value=refresh_token,
@@ -382,7 +427,6 @@ class UserViewSet(viewsets.ModelViewSet):
                     )
 
                     return response
-
                 
                 else:
                     return custom_error_response(
@@ -428,10 +472,8 @@ class UserViewSet(viewsets.ModelViewSet):
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
         
-            # Generate new verification code
             user.generate_verification_code()
         
-            # Send verification email
             email_sent = send_verification_email(
                 to_email=user.email_address,
                 name=user.full_name,
@@ -449,7 +491,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 )
             
         except User.DoesNotExist:
-            # Don't reveal if email exists or not for security
             return custom_response(
                 message='Verification code sent successfully to your email'
             )
@@ -496,24 +537,60 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         tags=['User Management'],
-        description="Delete a user account (Admin only)."
+        description="List all users with optional filtering by role, name, or phone number (Admin only)."
+    )
+    @action(detail=False, methods=['get'], url_path='list-users')
+    def list_users(self, request):
+        """
+        List all users with optional filtering by role, name, or phone number (Admin only)
+        """
+        queryset = self.get_queryset()
+        
+        role = request.query_params.get('role')
+        if role in ['landlord', 'tenant', 'admin']:
+            queryset = queryset.filter(role=role)
+        
+        name = request.query_params.get('name')
+        if name:
+            queryset = queryset.filter(
+                models.Q(firstname__icontains=name) | 
+                models.Q(lastname__icontains=name)
+            )
+        
+        phone = request.query_params.get('phone')
+        if phone:
+            queryset = queryset.filter(mobile_number__icontains=phone)
+        
+        serializer = UserListSerializer(queryset, many=True)
+        return custom_response(
+            data={'users': serializer.data},
+            message='Users retrieved successfully',
+            status_code=status.HTTP_200_OK
+        )
+
+    @extend_schema(
+        tags=['User Management'],
+        description="Delete a user by ID (Admin only)."
     )
     def destroy(self, request, *args, **kwargs):
         """
         Delete a user account (Admin only)
         """
         instance = self.get_object()
+        if instance.is_superuser:
+            return custom_error_response(
+                message="Cannot delete a superuser account",
+                status_code=status.HTTP_403_FORBIDDEN
+            )
         user_info = {
             'id': str(instance.id),
             'email': instance.email_address,
-            'name': instance.full_name
+            'name': instance.full_name,
+            'role': instance.role
         }
-        
-        # Perform the deletion
         self.perform_destroy(instance)
-        
         return custom_response(
             data={'deleted_user': user_info},
-            message='User account deleted successfully',
+            message=f"{instance.role.capitalize()} deleted successfully",
             status_code=status.HTTP_200_OK
         )
