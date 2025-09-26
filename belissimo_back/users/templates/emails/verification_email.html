@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    :root {
+      --primary-color: #973434;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #333333;
+    }
+
+    .email-container {
+      max-width: 600px;
+      margin: auto;
+      background-color: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      padding: 20px;
+      border: 1px solid #eee;
+    }
+
+    .header {
+      text-align: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .logo {
+      width: 150px; 
+      margin-bottom: 20px;
+    }
+
+    .success-message {
+      text-align: center;
+      margin: 20px 0;
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+
+    .illustration {
+      width: 100%;
+      max-width: 350px;
+      height: auto;
+      display: block;
+      margin: 20px auto;
+    }
+
+    .content {
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .content h2 {
+      color: var(--primary-color);
+      font-weight: bold;
+      margin-top: 0;
+    }
+
+    .verification-code {
+      background-color: #f8f9fa;
+      border: 2px solid var(--primary-color);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .verification-code h3 {
+      color: var(--primary-color);
+      margin: 0 0 10px 0;
+      font-size: 18px;
+    }
+
+    .code-display {
+      font-size: 32px;
+      font-weight: bold;
+      color: var(--primary-color);
+      letter-spacing: 8px;
+      font-family: 'Courier New', monospace;
+      margin: 10px 0;
+    }
+
+    .code-instruction {
+      font-size: 14px;
+      color: #666;
+      margin-top: 10px;
+    }
+
+    .highlight-bold-black {
+      color: var(--primary-color);
+      font-weight: bold;
+    }
+
+    .warning-box {
+      background-color: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 6px;
+      padding: 15px;
+      margin: 20px 0;
+      font-size: 14px;
+      color: #856404;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 13px;
+      color: #666;
+      padding: 20px 0;
+      border-top: 1px solid #eee;
+    }
+
+    .social-icons {
+      display: table;
+      margin: 15px auto 0 auto;
+    }
+
+    .social-icons a {
+      display: inline-block;
+      margin: 0 12px;
+      transition: all 0.3s ease;
+    }
+
+    .social-icons a:hover {
+      transform: translateY(-2px);
+    }
+
+    .social-icons img {
+      width: 28px;
+      height: 28px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="header">
+      <img class="logo" src="https://res.cloudinary.com/daqbgd5u7/image/upload/v1748523426/logo_hv1agc.png" alt="TunaresQ Logo">
+    </div>
+    
+    <div class="success-message">
+      Verify Your TunaresQ Account
+    </div>
+    
+    <img class="illustration" src="https://res.cloudinary.com/daqbgd5u7/image/upload/v1748523409/Group_w1larm.png" alt="Verification Illustration">
+    
+    <div class="content">
+      <p>Hi {{ name }},</p>
+      <p>Welcome to TunaresQ! We're excited to have you join our community.</p>
+
+      <p>
+        To complete your account setup and start making a difference, please verify 
+        your email address using the verification code below:
+      </p>
+
+      <div class="verification-code">
+        <h3>Your Verification Code</h3>
+        <div class="code-display">{{ verification_code }}</div>
+        <div class="code-instruction">Enter this code in the app to verify your account</div>
+      </div>
+
+      <div class="warning-box">
+        <strong>Important:</strong> This verification code will expire in 10 minutes for security reasons. 
+        If you don't verify within this time, you can request a new code.
+      </div>
+
+      <p>
+        Once verified, you'll be able to:
+      </p>
+      <ul>
+        <li class="highlight-bold-black">Fundraise for your needs or causes close to your heart</li>
+        <li class="highlight-bold-black">Donate items to those who need them most</li>
+        <li class="highlight-bold-black">Find volunteer opportunities for career growth and positive impact</li>
+      </ul>
+
+      <p>
+        At TunaresQ, we believe that every act of kindness creates ripples that matter. 
+        Your generosity helps restore dignity and hope to those in need.
+      </p>
+
+      <p>
+        If you didn't create an account with TunaresQ, please ignore this email or 
+        contact our support team.
+      </p>
+
+      <p class="highlight-bold-black">With gratitude, <br>The TunaresQ Team</p>
+    </div>
+
+    <div class="footer">
+      Follow us on our socials:
+      <div class="social-icons">
+        <a href="https://www.linkedin.com/company/tunaresq/"><img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn"></a>
+        <a href="https://www.instagram.com/_tunaresq?igsh=MTRqdjR5ZGt4ZGNvMg=="><img src="https://cdn-icons-png.flaticon.com/512/174/174855.png" alt="Instagram"></a>
+        <a href="https://www.tiktok.com/@tunaresq"><img src="https://cdn-icons-png.flaticon.com/512/3046/3046121.png" alt="TikTok"></a>
+        <a href="https://x.com/Tunaresq"><img src="https://cdn-icons-png.flaticon.com/512/5968/5968958.png" alt="X"></a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
